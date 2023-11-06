@@ -55,9 +55,9 @@ enum TokenType {
 
 }
 
-struct Token {
-    tokentype: TokenType,
-    literal: &char,
-    start: i32,
-    line: i32
-}
+// struct Token {
+//     tokentype: TokenType,
+//     literal: char,
+//     start: i32,
+//     line: i32
+// }
