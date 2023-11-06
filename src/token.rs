@@ -2,7 +2,7 @@
 enum TokenType {
     // parens
     LeftParen,
-    RIGHT_PAREN,
+    RightParen,
     // LEFT_SQUARE,
     // RIGHT_SQUARE,
     // LEFT_BRACE,
@@ -15,43 +15,43 @@ enum TokenType {
     // TRIPLE_DOUBLE_QUOTE,
 
     // comments
-    POUND,
+    Pound,
 
     // symbols
-    PLUS,
+    Plus,
     // PLUS_EQUAL,
-    MINUS,
+    Minus,
     // MINUS_EQUAL,
-    STAR,
+    Star,
     // STAR_EQUAL,
-    STAR_STAR,
-    SLASH,
-    SLASH_SLASH,
+    StarStar,
+    Slash,
+    SlashSlash,
     // EQUAL,
-    EQUAL_EQUAL,
-    NOT_EQUAL,
-    LESS,
-    LESS_EQUAL,
-    GREATER,
-    GREATER_EQUAL,
+    EqualEqual,
+    NotEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
 
     // whitespace
-    SPACE,
-    TAB,
-    NEWLINE,
+    Space,
+    Tab,
+    Newline,
 
     // control flow
 
     // types
-    INTEGER,
-    FLOAT,
+    Integer,
+    Float,
 
     // statements
     ASSERT,
 
     // other
-    IDENTIFIER,
-    EOF
+    Identifier,
+    Eof
 
 }
 
