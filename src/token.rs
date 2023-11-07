@@ -5,25 +5,10 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 #[derive(Debug, Clone, Copy, EnumIter)]
-enum TokenType {
-    LeftParen,
-    RightParen,
-    Pound,
-    Plus,
-    Minus,
-    Star,
-    StarStar,
-    Slash,
-    SlashSlash,
-    EqualEqual,
-    NotEqual,
-    Less,
-    LessEqual,
-    Greater,
-    GreaterEqual,
-    
+enum KeywordType {
     Assert,
     If,
+    In,
     Not,
     Else,
     Elif,
@@ -33,50 +18,90 @@ enum TokenType {
     Float,
     Complex,
     Class,
+}
 
-    Identifier,
+#[derive(Debug, Clone, Copy, EnumIter)]
+enum OperatorType {
+    LeftParen,
+    RightParen,
+    Pound,
+    Plus,
+    Minus,
+    Star,
+    StarStar,
+    Slash,
+    SlashSlash,
+    Equal,
+    EqualEqual,
+    NotEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+}
 
+impl From<KeywordType> for &str {
+    fn from(val: KeywordType) -> Self {
+        match val {
+            KeywordType::Assert => "assert",
+            KeywordType::If => "if",
+            KeywordType::In => "in",
+            KeywordType::Not => "not",
+            KeywordType::Else => "else",
+            KeywordType::Elif => "elif",
+            KeywordType::While => "while",
+            KeywordType::For => "for",
+            KeywordType::Integer => "int",
+            KeywordType::Float => "float",
+            KeywordType::Complex => "complex",
+            KeywordType::Class => "class",
+        }
+    }
+}
+
+impl From<OperatorType> for &str {
+    fn from(val: OperatorType) -> Self {
+        match val {
+            OperatorType::LeftParen => "(",
+            OperatorType::RightParen => ")",
+            OperatorType::Pound => "#",
+            OperatorType::Plus => "+",
+            OperatorType::Minus => "-",
+            OperatorType::Star => "*",
+            OperatorType::StarStar => "**",
+            OperatorType::Slash => "/",
+            OperatorType::SlashSlash => "//",
+            OperatorType::Equal => "=",
+            OperatorType::EqualEqual => "==",
+            OperatorType::Less => "<",
+            OperatorType::LessEqual => "<=",
+            OperatorType::Greater => ">",
+            OperatorType::GreaterEqual => ">=",
+            OperatorType::NotEqual => "!=",
+        }
+    }
 }
 
 impl From<TokenType> for &str {
     fn from(val: TokenType) -> Self {
         match val {
-            TokenType::LeftParen => "(",
-            TokenType::RightParen => ")",
-            TokenType::Pound => "#",
-            TokenType::Plus => "+",
-            TokenType::Minus => "-",
-            TokenType::Star => "*",
-            TokenType::StarStar => "**",
-            TokenType::Slash => "/",
-            TokenType::SlashSlash => "//",
-            TokenType::EqualEqual => "==",
-            TokenType::Less => "<",
-            TokenType::LessEqual => "<=",
-            TokenType::Greater => ">",
-            TokenType::GreaterEqual => ">=",
-            TokenType::NotEqual => "!=",
-
-            TokenType::Assert => "assert",
-            TokenType::If => "if",
-            TokenType::Not => "not",
-            TokenType::Else => "else",
-            TokenType::Elif => "elif",
-            TokenType::While => "while",
-            TokenType::For => "for",
-            TokenType::Integer => "int",
-            TokenType::Float => "float",
-            TokenType::Complex => "complex",
-            TokenType::Class => "class",
-
-            TokenType::Identifier => "Identifier"
+            TokenType::Identifier => "Identifier",
+            TokenType::Keyword(x) => x.into(),
+            TokenType::Operator(x) => x.into(),
         }
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+enum TokenType {
+    Keyword(KeywordType),
+    Operator(OperatorType),
+    Identifier
+}
+
+
 #[derive(Debug, Clone)]
 struct KeywordTree {
-    chr: char,
     token: Option<TokenType>,
     children: HashMap<char, KeywordTree>
 }
@@ -89,31 +114,35 @@ impl<'source> KeywordTree {
         for chr in tokentype_str.chars() {
             let maybe_child = current.children.get_mut(&chr);
             if maybe_child.is_none() {
-                current.children.insert(chr, KeywordTree{ chr, token: None, children: HashMap::new() });
+                current.children.insert(chr, KeywordTree{ token: None, children: HashMap::new() });
             }
-            current = current.children.get_mut(&chr).expect("should't be None")
+            current = current.children.get_mut(&chr).unwrap()
         }
         current.token = Some(tokentype);
     }
 
-    fn populate() -> KeywordTree {
-        let mut kwt = KeywordTree { chr: '\\', token: None, children: HashMap::new()};
+    fn populate() -> (KeywordTree, KeywordTree) {
+        let mut kwt = KeywordTree { token: None, children: HashMap::new()};
+        let mut ot = KeywordTree { token: None, children: HashMap::new()};
 
-        for tokentype in TokenType::iter() {
-            kwt.add_token(tokentype)
-        }        
-        
-        kwt
-    }
-
-    fn get_tokentype(self, token: &str) -> Option<KeywordTree> {
-        let mut current = Some(self);
-        for chr in token.chars() {
-            current.as_ref()?;
-            current = current.unwrap().children.get(&chr).cloned();
+        for keyword in KeywordType::iter() {
+            kwt.add_token(TokenType::Keyword(keyword))
         }
-        current
+
+        for keyword in OperatorType::iter() {
+            ot.add_token(TokenType::Operator(keyword))
+        }
+                
+        (kwt, ot)
     }
+
+    // fn get_tokentype(self, token: &str) -> Option<KeywordTree> {
+    //     let mut current = Some(self);
+    //     for chr in token.chars() {
+    //         current = current.unwrap().children.get(&chr).cloned();
+    //     }
+    //     current
+    // }
 }
 
 
@@ -134,7 +163,7 @@ fn is_alpha(c: char) -> bool {
 
 
 #[derive(Debug, Clone, Copy)]
-struct Token {
+pub struct Token {
     tokentype: TokenType,
     start: usize,
     length: usize,
@@ -142,20 +171,23 @@ struct Token {
 }
 
 #[derive(Debug)]
-pub struct Tokenizer {
-    source: String,
+pub struct Tokenizer<'source> {
+    source: &'source str,
     chars: Vec<char>,
     current_index: usize,
     line: usize,
+    keywords: KeywordTree,
+    operators: KeywordTree,
 }
 
-impl Tokenizer {
+impl<'source> Tokenizer<'source> {
     pub fn new(source: &str) -> Tokenizer {
         let chars: Vec<char> = source.chars().collect();
-        Tokenizer { source: String::from(source), chars, current_index: 0, line: 0 }
+        let (keywords, operators) = KeywordTree::populate();
+        Tokenizer { source, chars, current_index: 0, line: 0, keywords, operators }
     }
 
-    #[inline]
+    // #[inline]
     fn peek(&self, distance: usize) -> Option<char> {
         self.chars.get(self.current_index + distance).copied()
     }
@@ -217,26 +249,27 @@ impl Tokenizer {
         }
 
         let tokentype = if found_j {
-            TokenType::Complex
+            TokenType::Keyword(KeywordType::Complex)
         } else if found_dot {
-            TokenType::Float
+            TokenType::Keyword(KeywordType::Float)
         } else {
-            TokenType::Integer
+            TokenType::Keyword(KeywordType::Integer)
         };
 
         Token {tokentype, start: self.current_index, length, line: self.line}
     }
 
-    fn parse_reserved(&self) -> Option<Token> {
-        let mut kwt_node = &KeywordTree::populate();
+    fn parse_keywords(&self) -> Option<Token> {
+        let mut keyword_node = &self.keywords;
         let mut length: usize = 0;
 
         let mut chr = self.peek(length);
-        while chr.is_some_and(|c| is_digit(c) || is_underscore(c)) {
-            let tmp = kwt_node.children.get(&chr.unwrap());
+        println!("chr: {:?}", chr);
+        while chr.is_some_and(|c| is_digit(c) || is_alpha(c) || is_underscore(c)) {
+            let tmp = keyword_node.children.get(&chr.unwrap());
             match tmp {
                 None => break,
-                Some(x) => kwt_node = x
+                Some(x) => keyword_node = x
             };
 
             length += 1;
@@ -244,19 +277,43 @@ impl Tokenizer {
 
         }
 
-        if length == 0 || kwt_node.token.is_none() {
+        if length == 0 || keyword_node.token.is_none() {
             None
         } else {
-            // let keyword: String = self.chars[self.current_index..self.current_index + length].iter().collect();
-            // let keyword: &str = &keyword.as_str();
-            Some(Token {tokentype: kwt_node.token.unwrap(), start: self.current_index, length, line: self.line})
+            Some(Token {tokentype: keyword_node.token.unwrap(), start: self.current_index, length, line: self.line})
         }
         
     }
-    
+
+    fn parse_operators(&self) -> Option<Token> {
+        let mut op_node = &self.operators;
+        let mut length: usize = 0;
+
+        let mut chr = self.peek(length);
+        println!("chr: {:?}", chr);
+        while chr.is_some() {
+            let tmp = op_node.children.get(&chr.unwrap());
+            match tmp {
+                None => break,
+                Some(x) => op_node = x
+            };
+
+            length += 1;
+            chr = self.peek(length);
+
+        }
+
+        if length == 0 || op_node.token.is_none() {
+            None
+        } else {
+            Some(Token {tokentype: op_node.token.unwrap(), start: self.current_index, length, line: self.line})
+        }
+        
+    }
+
     fn parse_identifier(&self) -> Token {
-        let mut length: usize = 1;
-        let mut chars = self.chars[self.current_index + 1..].iter();
+        let mut length: usize = 0;
+        let mut chars = self.chars[self.current_index..].iter();
         let mut chr = chars.next();
 
         while chr.is_some_and(|&c| is_digit(c) || is_alpha(c) || is_underscore(c)) {
@@ -267,63 +324,65 @@ impl Tokenizer {
         Token {tokentype: TokenType::Identifier, start: self.current_index, length, line: self.line}
     }
 
-    fn tokenize(&mut self) -> Vec<Token> {
-        let mut chars = self.chars[self.current_index..].iter();
-        let mut chr = chars.next();
+    pub fn tokenize(&mut self) -> Vec<Token> {
+        // let mut chars = self.chars[self.current_index..].iter();
+        // let mut chr = chars.next();
         let mut tokens: Vec<Token> = vec![];
 
+        let mut chr = self.peek(0);
         while chr.is_some() {
             println!("{:?}", chr);
-            match *chr.unwrap() {
+            match chr.unwrap() {
                 // non-newline whitespace
                 c if c == ' ' || c == '\t' => {
-                    chr = chars.next();
+                    self.current_index += 1;
                 },
                 // newline whitespace
                 c if c == '\n' => {
                     self.line += 1;
-                    chr = chars.next();
+                    self.current_index += 1;
                 },
                 // numbers
                 c if is_digit(c) => {
                     let token = self.parse_number();
                     tokens.push(token);
-                    for s in 0..token.length {
-                        println!("{}", s);
-                        chr = chars.next();
-                    }
+                    self.current_index += token.length;              
                 },
                 // identifiers
                 c if is_alpha(c) || is_underscore(c) => {
-                    let reserved = self.parse_reserved();
+                    let reserved = self.parse_keywords();
                     
                     match reserved {
                         Some(t) => {
                             tokens.push(t);
-                            for _ in 0..t.length {
-                                chr = chars.next();
-                            }                        }
+                            self.current_index += t.length;              
+    
+                        }
                         None => {
                             let identifier = self.parse_identifier();
                             tokens.push(identifier);
-                            for _ in 0..identifier.length {
-                                chr = chars.next();
-                            }                        }
+                            self.current_index += identifier.length;                              
+                        }
                     }
                 },
                 // operators
                 _ => {
-                    let reserved = self.parse_reserved();
+                    let reserved = self.parse_operators();
                     match reserved {
                         Some(t) => {
                             tokens.push(t);
-                            for _ in 0..t.length {
-                                chr = chars.next();
-                            }                        },
-                        None => panic!("unknown token")
+                            self.current_index += t.length;
+                         },
+                        None => {
+                            for t in tokens.into_iter() {
+                                println!("\t{:?}", t);
+                            }
+                            panic!("unknown token");
+                        }
                     }
                 }
             };
+            chr = self.peek(0);
        }
 
         tokens
@@ -338,7 +397,13 @@ mod tests {
 
     #[test]
     fn basic_tokens() {
-        let tokens = Tokenizer::new("3 + 1").tokenize();
-        println!("{:?}", tokens)
+        let tokens = Tokenizer::new(r"
+        if for 
+        while fart ==
+        ").tokenize();
+        for t in tokens.into_iter() {
+            println!("\t{:?}", t);
+        }
+        assert!(false);
     }
 }
