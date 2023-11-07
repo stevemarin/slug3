@@ -106,7 +106,7 @@ impl<'source> KeywordTree {
         kwt
     }
 
-    fn get_tokentype<'a>(self, token: &str) -> Option<KeywordTree> {
+    fn get_tokentype(self, token: &str) -> Option<KeywordTree> {
         let mut current = Some(self);
         for chr in token.chars() {
             current.as_ref()?;
@@ -160,13 +160,13 @@ impl Tokenizer {
         self.chars.get(self.current_index + distance).copied()
     }
 
-    fn at_end(&self, distance: usize) -> bool {
-        self.current_index + distance >= self.chars.len()
-    }
+    // fn at_end(&self, distance: usize) -> bool {
+    //     self.current_index + distance >= self.chars.len()
+    // }
 
-    fn num_remaining_chars(&self) -> usize {
-        self.chars.len() - self.current_index
-    }
+    // fn num_remaining_chars(&self) -> usize {
+    //     self.chars.len() - self.current_index
+    // }
 
     fn parse_number(&self) -> Token {
         let mut found_dot = false;
@@ -273,36 +273,42 @@ impl Tokenizer {
         let mut tokens: Vec<Token> = vec![];
 
         while chr.is_some() {
-            match chr.expect("should be some here...") {
+            println!("{:?}", chr);
+            match *chr.unwrap() {
                 // non-newline whitespace
-                &c if c == ' ' || c == '\t' => {
+                c if c == ' ' || c == '\t' => {
                     chr = chars.next();
                 },
                 // newline whitespace
-                &c if c == '\n' => {
+                c if c == '\n' => {
                     self.line += 1;
                     chr = chars.next();
                 },
                 // numbers
-                &c if is_digit(c) => {
+                c if is_digit(c) => {
                     let token = self.parse_number();
                     tokens.push(token);
-                    chars.nth(token.length);
+                    for s in 0..token.length {
+                        println!("{}", s);
+                        chr = chars.next();
+                    }
                 },
                 // identifiers
-                &c if is_alpha(c) || is_underscore(c) => {
+                c if is_alpha(c) || is_underscore(c) => {
                     let reserved = self.parse_reserved();
                     
                     match reserved {
                         Some(t) => {
                             tokens.push(t);
-                            chars.nth(t.length);
-                        }
+                            for _ in 0..t.length {
+                                chr = chars.next();
+                            }                        }
                         None => {
                             let identifier = self.parse_identifier();
                             tokens.push(identifier);
-                            chars.nth(identifier.length);
-                        }
+                            for _ in 0..identifier.length {
+                                chr = chars.next();
+                            }                        }
                     }
                 },
                 // operators
@@ -311,8 +317,9 @@ impl Tokenizer {
                     match reserved {
                         Some(t) => {
                             tokens.push(t);
-                            chars.nth(t.length);
-                        },
+                            for _ in 0..t.length {
+                                chr = chars.next();
+                            }                        },
                         None => panic!("unknown token")
                     }
                 }
