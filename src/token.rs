@@ -38,9 +38,9 @@ enum TokenType {
 
 }
 
-impl Into<&str> for TokenType {
-    fn into(self) -> &'static str {
-        match self {
+impl From<TokenType> for &str {
+    fn from(val: TokenType) -> Self {
+        match val {
             TokenType::LeftParen => "(",
             TokenType::RightParen => ")",
             TokenType::Pound => "#",
@@ -107,9 +107,9 @@ impl<'source> KeywordTree {
     }
 
     fn get_tokentype<'a>(self, token: &str) -> Option<KeywordTree> {
-        let mut current = Some(self.clone());
+        let mut current = Some(self);
         for chr in token.chars() {
-            if current.is_none() { return None }
+            current.as_ref()?;
             current = current.unwrap().children.get(&chr).cloned();
         }
         current
@@ -119,17 +119,17 @@ impl<'source> KeywordTree {
 
 #[inline]
 fn is_underscore(c: char) -> bool {
-    if c == '_' {true} else {false}
+    c == '_'
 }
 
 #[inline]
 fn is_digit(c: char) -> bool {
-    if '0' <= c && c <= '9' {true} else {false}
+    c.is_ascii_digit()
 }
 
 #[inline]
 fn is_alpha(c: char) -> bool {
-    if 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' {true} else {false}
+    c.is_ascii_lowercase() || c.is_ascii_uppercase()
 }
 
 
@@ -161,7 +161,7 @@ impl Tokenizer {
     }
 
     fn at_end(&self, distance: usize) -> bool {
-        if self.current_index + distance >= self.chars.len() {true} else {false}
+        self.current_index + distance >= self.chars.len()
     }
 
     fn num_remaining_chars(&self) -> usize {
@@ -273,7 +273,7 @@ impl Tokenizer {
         let mut tokens: Vec<Token> = vec![];
 
         while chr.is_some() {
-            _ = match chr.expect("should be some here...") {
+            match chr.expect("should be some here...") {
                 // non-newline whitespace
                 &c if c == ' ' || c == '\t' => {
                     chr = chars.next();
@@ -316,8 +316,8 @@ impl Tokenizer {
                         None => panic!("unknown token")
                     }
                 }
-            }
-        }
+            };
+       }
 
         tokens
 
