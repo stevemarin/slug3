@@ -5,7 +5,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 #[derive(Debug, Clone, Copy, EnumIter)]
-enum KeywordType {
+pub enum KeywordType {
     Assert,
     If,
     In,
@@ -21,7 +21,7 @@ enum KeywordType {
 }
 
 #[derive(Debug, Clone, Copy, EnumIter)]
-enum OperatorType {
+pub enum OperatorType {
     LeftParen,
     RightParen,
     Pound,
@@ -93,7 +93,7 @@ impl From<TokenType> for &str {
 }
 
 #[derive(Debug, Clone, Copy)]
-enum TokenType {
+pub enum TokenType {
     Keyword(KeywordType),
     Operator(OperatorType),
     Identifier
@@ -164,15 +164,15 @@ fn is_alpha(c: char) -> bool {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Token {
-    tokentype: TokenType,
-    start: usize,
-    length: usize,
-    line: usize
+    pub tokentype: TokenType,
+    pub start: usize,
+    pub length: usize,
+    pub line: usize
 }
 
 #[derive(Debug)]
 pub struct Tokenizer<'source> {
-    source: &'source str,
+    pub source: &'source str,
     chars: Vec<char>,
     current_index: usize,
     line: usize,
@@ -191,14 +191,6 @@ impl<'source> Tokenizer<'source> {
     fn peek(&self, distance: usize) -> Option<char> {
         self.chars.get(self.current_index + distance).copied()
     }
-
-    // fn at_end(&self, distance: usize) -> bool {
-    //     self.current_index + distance >= self.chars.len()
-    // }
-
-    // fn num_remaining_chars(&self) -> usize {
-    //     self.chars.len() - self.current_index
-    // }
 
     fn parse_number(&self) -> Token {
         let mut found_dot = false;
