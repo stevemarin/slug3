@@ -1,10 +1,9 @@
 
-
 use hashbrown::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-#[derive(Debug, Clone, Copy, EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, Hash)]
 pub enum KeywordType {
     Assert,
     If,
@@ -20,7 +19,7 @@ pub enum KeywordType {
     Class,
 }
 
-#[derive(Debug, Clone, Copy, EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, Hash)]
 pub enum OperatorType {
     LeftParen,
     RightParen,
@@ -82,23 +81,24 @@ impl From<OperatorType> for &str {
     }
 }
 
-impl From<TokenType> for &str {
-    fn from(val: TokenType) -> Self {
-        match val {
-            TokenType::Identifier => "Identifier",
-            TokenType::Keyword(x) => x.into(),
-            TokenType::Operator(x) => x.into(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {
     Keyword(KeywordType),
     Operator(OperatorType),
-    Identifier
+    Identifier,
+    Eof
 }
 
+impl From<TokenType> for &str {
+    fn from(val: TokenType) -> Self {
+        match val {
+            TokenType::Keyword(x) => x.into(),
+            TokenType::Operator(x) => x.into(),
+            TokenType::Identifier => "Identifier",
+            TokenType::Eof => "Eof",
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 struct KeywordTree {
@@ -162,7 +162,7 @@ fn is_alpha(c: char) -> bool {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Token {
     pub tokentype: TokenType,
     pub start: usize,
@@ -385,17 +385,18 @@ impl<'source> Tokenizer<'source> {
 
 #[cfg(test)]
 mod tests {
-    use super::Tokenizer;
+    use super::{Token, Tokenizer, KeywordType, TokenType};
 
     #[test]
-    fn basic_tokens() {
-        let tokens = Tokenizer::new(r"
-        if for 
-        while fart ==
-        ").tokenize();
-        for t in tokens.into_iter() {
-            println!("\t{:?}", t);
-        }
-        assert!(false);
+    fn test_basic_number_parsing() {
+        let tokens = Tokenizer::new(r"1.2 21 2.1J 1e-3j 1e-1").tokenize();
+        let truth = vec![	
+            Token { tokentype: TokenType::Keyword(KeywordType::Float), start: 0, length: 4, line: 0 },
+            Token { tokentype: TokenType::Keyword(KeywordType::Integer), start: 4, length: 3, line: 0 },
+            Token { tokentype: TokenType::Keyword(KeywordType::Complex), start: 7, length: 5, line: 0 },
+            Token { tokentype: TokenType::Keyword(KeywordType::Complex), start: 12, length: 6, line: 0 },
+            Token { tokentype: TokenType::Keyword(KeywordType::Integer), start: 18, length: 5, line: 0 },
+        ];
+        assert!(tokens.iter().zip(truth.iter()).map(|(&x, &y)| x == y).all(|x| x == true));
     }
 }

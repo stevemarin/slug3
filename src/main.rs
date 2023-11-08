@@ -1,5 +1,11 @@
 
 mod token;
+mod parser;
+mod chunk;
+mod value;
+mod object;
+mod vm;
+
 use crate::token::Tokenizer;
 
 fn main() {
