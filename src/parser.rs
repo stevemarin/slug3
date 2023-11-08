@@ -17,9 +17,9 @@ enum Precedence {
     Primary
 }
 
-impl Into<ParseRule> for TokenType {
-    fn into(self) -> ParseRule {
-        match self {
+impl From<TokenType> for ParseRule {
+    fn from(val: TokenType) -> Self {
+        match val {
             TokenType::Operator(OperatorType::LeftParen) => ParseRule { prefix: Some(grouping), infix: Some(call), precedence: Precedence::Call },
             TokenType::Operator(OperatorType::RightParen) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
 
@@ -179,30 +179,30 @@ fn emit_byte(op: Op, line: usize) {
     line;
 }
 
-fn unary(parser: &mut Parser, _: bool) {
+fn unary(_parser: &mut Parser, _: bool) {
 
 }
 
-fn binary(parser: &mut Parser, _: bool) {
+fn binary(_parser: &mut Parser, _: bool) {
 
 }
 
-fn grouping(parser: &mut Parser, _: bool) {
+fn grouping(_parser: &mut Parser, _: bool) {
 
 }
 
-fn call(parser: &mut Parser, _: bool) {
+fn call(_parser: &mut Parser, _: bool) {
 
 }
 
-fn integer(parser: &mut Parser, _: bool) {
+fn integer(_parser: &mut Parser, _: bool) {
 
 }
 
-fn float(parser: &mut Parser, _: bool) {
+fn float(_parser: &mut Parser, _: bool) {
 
 }
 
-fn complex(parser: &mut Parser, _: bool) {
+fn complex(_parser: &mut Parser, _: bool) {
 
 }

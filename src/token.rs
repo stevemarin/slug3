@@ -397,6 +397,6 @@ mod tests {
             Token { tokentype: TokenType::Keyword(KeywordType::Complex), start: 12, length: 6, line: 0 },
             Token { tokentype: TokenType::Keyword(KeywordType::Integer), start: 18, length: 5, line: 0 },
         ];
-        assert!(tokens.iter().zip(truth.iter()).map(|(&x, &y)| x == y).all(|x| x == true));
+        assert!(tokens.iter().zip(truth.iter()).map(|(&x, &y)| x == y).all(|x| x));
     }
 }
