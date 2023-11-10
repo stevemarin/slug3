@@ -11,6 +11,7 @@ pub enum Op {
     Subtract,
     Multiply,
     Divide,
+    IntDivide,
     Exponent,
 
     ValueEqual,
@@ -29,14 +30,16 @@ pub enum Op {
     Assert,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum BytecodeOp {
-    Op,
+    Op(Op),
     ConstantIndex(u8),
     JumpDistance(u8),
 }
 
-pub struct Chunk {
-    codes: Vec<BytecodeOp>,
-    lines: Vec<u16>,
-    constants: Vec<Value>
+#[derive(Debug)]
+pub struct Chunk<'vm> {
+    pub codes: Vec<BytecodeOp>,
+    pub lines: Vec<u16>,
+    pub constants: Vec<Value<'vm>>
 }

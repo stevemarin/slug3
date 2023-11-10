@@ -1,6 +1,7 @@
 
 use crate::chunk::Chunk;
 
+#[derive(Debug)]
 pub enum ObjectType {
     // OBJ_BOUND_METHOD,
     // OBJ_CLASS,
@@ -11,15 +12,17 @@ pub enum ObjectType {
     // OBJ_STRING,
     // OBJ_UPVALUE,
 }
+#[derive(Debug)]
 pub struct Object {
     pub objecttype: ObjectType,
     pub marked: bool
 }
 
-pub struct ObjFucntion {
-    obj: Object,
-    arity: u8,
+#[derive(Debug)]
+pub struct ObjFucntion<'vm> {
+    pub obj: Object,
+    pub arity: u8,
     // upvalue_count: u8,
-    chunk: Chunk,
-    name: String
+    pub chunk: &'vm Chunk<'vm>,
+    pub name: String
 }

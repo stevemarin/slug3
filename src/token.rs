@@ -3,8 +3,10 @@ use hashbrown::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use crate::value::Value;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, Hash)]
-pub enum KeywordType {
+pub enum Keyword {
     Assert,
     If,
     In,
@@ -13,14 +15,11 @@ pub enum KeywordType {
     Elif,
     While,
     For,
-    Integer,
-    Float,
-    Complex,
     Class,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, Hash)]
-pub enum OperatorType {
+pub enum Operator {
     LeftParen,
     RightParen,
     Pound,
@@ -39,52 +38,89 @@ pub enum OperatorType {
     GreaterEqual,
 }
 
-impl From<KeywordType> for &str {
-    fn from(val: KeywordType) -> Self {
-        match val {
-            KeywordType::Assert => "assert",
-            KeywordType::If => "if",
-            KeywordType::In => "in",
-            KeywordType::Not => "not",
-            KeywordType::Else => "else",
-            KeywordType::Elif => "elif",
-            KeywordType::While => "while",
-            KeywordType::For => "for",
-            KeywordType::Integer => "int",
-            KeywordType::Float => "float",
-            KeywordType::Complex => "complex",
-            KeywordType::Class => "class",
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, Hash)]
+pub enum Number {
+    Integer,
+    Float,
+    Complex,
+}
+
+impl From<Keyword> for &str {
+    fn from(value: Keyword) -> Self {
+        match value {
+            Keyword::Assert => "assert",
+            Keyword::If => "if",
+            Keyword::In => "in",
+            Keyword::Not => "not",
+            Keyword::Else => "else",
+            Keyword::Elif => "elif",
+            Keyword::While => "while",
+            Keyword::For => "for",
+            Keyword::Class => "class",
         }
     }
 }
 
-impl From<OperatorType> for &str {
-    fn from(val: OperatorType) -> Self {
-        match val {
-            OperatorType::LeftParen => "(",
-            OperatorType::RightParen => ")",
-            OperatorType::Pound => "#",
-            OperatorType::Plus => "+",
-            OperatorType::Minus => "-",
-            OperatorType::Star => "*",
-            OperatorType::StarStar => "**",
-            OperatorType::Slash => "/",
-            OperatorType::SlashSlash => "//",
-            OperatorType::Equal => "=",
-            OperatorType::EqualEqual => "==",
-            OperatorType::Less => "<",
-            OperatorType::LessEqual => "<=",
-            OperatorType::Greater => ">",
-            OperatorType::GreaterEqual => ">=",
-            OperatorType::NotEqual => "!=",
+impl From<Operator> for &str {
+    fn from(value: Operator) -> Self {
+        match value {
+            Operator::LeftParen => "(",
+            Operator::RightParen => ")",
+            Operator::Pound => "#",
+            Operator::Plus => "+",
+            Operator::Minus => "-",
+            Operator::Star => "*",
+            Operator::StarStar => "**",
+            Operator::Slash => "/",
+            Operator::SlashSlash => "//",
+            Operator::Equal => "=",
+            Operator::EqualEqual => "==",
+            Operator::Less => "<",
+            Operator::LessEqual => "<=",
+            Operator::Greater => ">",
+            Operator::GreaterEqual => ">=",
+            Operator::NotEqual => "!=",
         }
     }
 }
+
+impl From<Number> for &str {
+    fn from(value: Number) -> Self {
+        match value {
+            Number::Integer => "int",
+            Number::Float => "float",
+            Number::Complex => "complex",
+        }
+    }
+}
+
+impl Operator {
+    pub fn doit<'a>(&self, a: Value<'a>, b: Value<'a>) -> Value<'a> {
+        match self {
+            Operator::Plus => a + b,
+            Operator::Minus => a - b,
+            Operator::Star => a * b,
+            Operator::StarStar => a.pow(b),
+            Operator::Slash => a / b,
+            Operator::SlashSlash => a.int_division(b),
+            _ => todo!("inafeinf")
+            // Operator::EqualEqual => a == b,
+            // Operator::Greater => a > b,
+            // Operator::GreaterEqual => a >= b,
+            // Operator::Less => a < b,
+            // Operator::LessEqual => a <= b,
+            // Operator::NotEqual => a != b,
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {
-    Keyword(KeywordType),
-    Operator(OperatorType),
+    Keyword(Keyword),
+    Operator(Operator),
+    Number(Number),
     Identifier,
     Eof
 }
@@ -94,6 +130,7 @@ impl From<TokenType> for &str {
         match val {
             TokenType::Keyword(x) => x.into(),
             TokenType::Operator(x) => x.into(),
+            TokenType::Number(x) => x.into(),
             TokenType::Identifier => "Identifier",
             TokenType::Eof => "Eof",
         }
@@ -125,24 +162,17 @@ impl<'source> KeywordTree {
         let mut kwt = KeywordTree { token: None, children: HashMap::new()};
         let mut ot = KeywordTree { token: None, children: HashMap::new()};
 
-        for keyword in KeywordType::iter() {
+        for keyword in Keyword::iter() {
             kwt.add_token(TokenType::Keyword(keyword))
         }
 
-        for keyword in OperatorType::iter() {
+        for keyword in Operator::iter() {
             ot.add_token(TokenType::Operator(keyword))
         }
                 
         (kwt, ot)
     }
 
-    // fn get_tokentype(self, token: &str) -> Option<KeywordTree> {
-    //     let mut current = Some(self);
-    //     for chr in token.chars() {
-    //         current = current.unwrap().children.get(&chr).cloned();
-    //     }
-    //     current
-    // }
 }
 
 
@@ -187,7 +217,7 @@ impl<'source> Tokenizer<'source> {
         Tokenizer { source, chars, current_index: 0, line: 0, keywords, operators }
     }
 
-    // #[inline]
+    #[inline]
     fn peek(&self, distance: usize) -> Option<char> {
         self.chars.get(self.current_index + distance).copied()
     }
@@ -241,11 +271,11 @@ impl<'source> Tokenizer<'source> {
         }
 
         let tokentype = if found_j {
-            TokenType::Keyword(KeywordType::Complex)
+            TokenType::Number(Number::Complex)
         } else if found_dot {
-            TokenType::Keyword(KeywordType::Float)
+            TokenType::Number(Number::Float)
         } else {
-            TokenType::Keyword(KeywordType::Integer)
+            TokenType::Number(Number::Integer)
         };
 
         Token {tokentype, start: self.current_index, length, line: self.line}
@@ -256,7 +286,6 @@ impl<'source> Tokenizer<'source> {
         let mut length: usize = 0;
 
         let mut chr = self.peek(length);
-        println!("chr: {:?}", chr);
         while chr.is_some_and(|c| is_digit(c) || is_alpha(c) || is_underscore(c)) {
             let tmp = keyword_node.children.get(&chr.unwrap());
             match tmp {
@@ -282,7 +311,6 @@ impl<'source> Tokenizer<'source> {
         let mut length: usize = 0;
 
         let mut chr = self.peek(length);
-        println!("chr: {:?}", chr);
         while chr.is_some() {
             let tmp = op_node.children.get(&chr.unwrap());
             match tmp {
@@ -323,7 +351,6 @@ impl<'source> Tokenizer<'source> {
 
         let mut chr = self.peek(0);
         while chr.is_some() {
-            println!("{:?}", chr);
             match chr.unwrap() {
                 // non-newline whitespace
                 c if c == ' ' || c == '\t' => {
@@ -366,9 +393,6 @@ impl<'source> Tokenizer<'source> {
                             self.current_index += t.length;
                          },
                         None => {
-                            for t in tokens.into_iter() {
-                                println!("\t{:?}", t);
-                            }
                             panic!("unknown token");
                         }
                     }
@@ -385,17 +409,17 @@ impl<'source> Tokenizer<'source> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Token, Tokenizer, KeywordType, TokenType};
+    use super::{Token, Tokenizer, Number, TokenType};
 
     #[test]
     fn test_basic_number_parsing() {
         let tokens = Tokenizer::new(r"1.2 21 2.1J 1e-3j 1e-1").tokenize();
         let truth = vec![	
-            Token { tokentype: TokenType::Keyword(KeywordType::Float), start: 0, length: 4, line: 0 },
-            Token { tokentype: TokenType::Keyword(KeywordType::Integer), start: 4, length: 3, line: 0 },
-            Token { tokentype: TokenType::Keyword(KeywordType::Complex), start: 7, length: 5, line: 0 },
-            Token { tokentype: TokenType::Keyword(KeywordType::Complex), start: 12, length: 6, line: 0 },
-            Token { tokentype: TokenType::Keyword(KeywordType::Integer), start: 18, length: 5, line: 0 },
+            Token { tokentype: TokenType::Number(Number::Float), start: 0, length: 4, line: 0 },
+            Token { tokentype: TokenType::Number(Number::Integer), start: 4, length: 3, line: 0 },
+            Token { tokentype: TokenType::Number(Number::Complex), start: 7, length: 5, line: 0 },
+            Token { tokentype: TokenType::Number(Number::Complex), start: 12, length: 6, line: 0 },
+            Token { tokentype: TokenType::Number(Number::Integer), start: 18, length: 5, line: 0 },
         ];
         assert!(tokens.iter().zip(truth.iter()).map(|(&x, &y)| x == y).all(|x| x));
     }

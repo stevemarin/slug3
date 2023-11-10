@@ -1,8 +1,8 @@
 
-use crate::{token::{Token, TokenType, OperatorType, KeywordType}, chunk::Op};
+use crate::{token::{Token, TokenType, Number, Operator, Keyword}, chunk::Op};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum Precedence {
+pub enum Precedence {
     None,
     Assignment,
     Or,
@@ -20,39 +20,39 @@ enum Precedence {
 impl From<TokenType> for ParseRule {
     fn from(val: TokenType) -> Self {
         match val {
-            TokenType::Operator(OperatorType::LeftParen) => ParseRule { prefix: Some(grouping), infix: Some(call), precedence: Precedence::Call },
-            TokenType::Operator(OperatorType::RightParen) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Operator(Operator::LeftParen) => ParseRule { prefix: Some(grouping), infix: Some(call), precedence: Precedence::Call },
+            TokenType::Operator(Operator::RightParen) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
 
-            TokenType::Operator(OperatorType::Plus) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Term },
-            TokenType::Operator(OperatorType::Minus) => ParseRule { prefix: Some(unary), infix: Some(binary), precedence: Precedence::Term },
-            TokenType::Operator(OperatorType::Star) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Factor },
-            TokenType::Operator(OperatorType::Slash) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Factor },
-            TokenType::Operator(OperatorType::SlashSlash) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Factor },
-            TokenType::Operator(OperatorType::StarStar) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Exponent },
+            TokenType::Operator(Operator::Plus) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Term },
+            TokenType::Operator(Operator::Minus) => ParseRule { prefix: Some(unary), infix: Some(binary), precedence: Precedence::Term },
+            TokenType::Operator(Operator::Star) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Factor },
+            TokenType::Operator(Operator::Slash) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Factor },
+            TokenType::Operator(Operator::SlashSlash) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Factor },
+            TokenType::Operator(Operator::StarStar) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Exponent },
             
-            TokenType::Operator(OperatorType::Greater) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
-            TokenType::Operator(OperatorType::GreaterEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
-            TokenType::Operator(OperatorType::Less) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
-            TokenType::Operator(OperatorType::LessEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
-            TokenType::Operator(OperatorType::EqualEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Equality },
-            TokenType::Operator(OperatorType::NotEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Equality },
+            TokenType::Operator(Operator::Greater) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
+            TokenType::Operator(Operator::GreaterEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
+            TokenType::Operator(Operator::Less) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
+            TokenType::Operator(Operator::LessEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Comparison },
+            TokenType::Operator(Operator::EqualEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Equality },
+            TokenType::Operator(Operator::NotEqual) => ParseRule { prefix: None, infix: Some(binary), precedence: Precedence::Equality },
 
-            TokenType::Operator(OperatorType::Pound) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Operator(OperatorType::Equal) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Operator(Operator::Pound) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Operator(Operator::Equal) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
 
-            TokenType::Keyword(KeywordType::Integer) => ParseRule { prefix: Some(integer), infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::Float) => ParseRule { prefix: Some(float), infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::Complex) => ParseRule { prefix: Some(complex), infix: None, precedence: Precedence::None },
+            TokenType::Number(Number::Integer) => ParseRule { prefix: Some(integer), infix: None, precedence: Precedence::None },
+            TokenType::Number(Number::Float) => ParseRule { prefix: Some(float), infix: None, precedence: Precedence::None },
+            TokenType::Number(Number::Complex) => ParseRule { prefix: Some(complex), infix: None, precedence: Precedence::None },
 
-            TokenType::Keyword(KeywordType::Assert) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::If) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::In) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::Not) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::Else) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::Elif) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::While) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::For) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
-            TokenType::Keyword(KeywordType::Class) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::Assert) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::If) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::In) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::Not) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::Else) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::Elif) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::While) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::For) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
+            TokenType::Keyword(Keyword::Class) => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
 
             TokenType::Identifier => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
             TokenType::Eof => ParseRule { prefix: None, infix: None, precedence: Precedence::None },
@@ -89,6 +89,10 @@ pub struct Parser {
 }
 
 impl Parser {
+    pub fn new(tokens: Vec<Token>) -> Parser {
+        Parser { current_index: 0, tokens, had_error: false, panic_mode: false }
+    }
+
     #[inline]
     fn current(&self) -> Token {
         *self.tokens.get(self.current_index).unwrap()
@@ -120,7 +124,7 @@ impl Parser {
         }
     }
 
-    fn parse_precedence(&mut self, precedence: Precedence) {
+    pub fn parse_precedence(&mut self, precedence: Precedence) {
         self.current_index += 1;
 
         let assignable = precedence <= Precedence::Assignment;
@@ -141,7 +145,7 @@ impl Parser {
             }
         }
 
-        if assignable && self.match_tokentype(TokenType::Operator(OperatorType::Equal)) {
+        if assignable && self.match_tokentype(TokenType::Operator(Operator::Equal)) {
             panic!("invalid assignment target")
         }
 
@@ -156,7 +160,7 @@ impl Parser {
     }
 
     fn statement(&mut self) {
-        if self.match_tokentype(TokenType::Keyword(KeywordType::Assert)) {
+        if self.match_tokentype(TokenType::Keyword(Keyword::Assert)) {
             self.assert();
         } else {
             self.expression_statement()
@@ -175,6 +179,7 @@ impl Parser {
 }
 
 fn emit_byte(op: Op, line: usize) {
+    println!("emitting bytes");
     op;
     line;
 }
