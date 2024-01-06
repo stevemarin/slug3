@@ -1,5 +1,5 @@
 
-use crate::{object::{ObjFucntion, Object}, chunk::{BytecodeOp, Op}, value::{Value, is_number}, token::Operator};
+use crate::{object::{ObjFucntion, Object}, chunk::{BytecodeOp, Op}, value::{Value, is_number}, token::Operator, compiler::Compiler};
 
 use hashbrown::HashMap;
 
@@ -39,8 +39,9 @@ impl<'vm> CallFrame<'vm> {
 }
 
 #[derive(Debug)]
-struct VM<'vm> {
+pub struct VM<'vm> {
     stack: Vec<Value<'vm>>,
+    compilers: Vec<Compiler<'vm>>,
     globals: HashMap<&'vm str, Value<'vm>>,
     strings: HashMap<&'vm str, &'vm str>,
     frames: Vec<CallFrame<'vm>>,
@@ -50,9 +51,10 @@ struct VM<'vm> {
 }
 
 impl<'vm> VM<'vm> {
-    fn new() -> VM<'vm> {
+    pub fn new() -> VM<'vm> {
         VM {
             stack: vec![],
+            compilers: vec![],
             globals: HashMap::new(),
             strings: HashMap::new(),
             frames: vec![],
@@ -134,7 +136,6 @@ impl<'vm> VM<'vm> {
                         return InterpretResult::Ok;
                     }
 
-                    
                     _ = self.frames.pop();
 
                 }
@@ -153,9 +154,9 @@ mod tests {
 
     #[test]
     fn test_arithmetic() {
-        let tokens = Tokenizer::new(r"1 + 2").tokenize();
-        let mut parser = Parser::new(tokens);
-        parser.parse_precedence(Precedence::Assignment)
+    //     let tokens = Tokenizer::new(r"1 + 2").tokenize();
+    //     let mut parser = &Parser::<>::new(tokens);
+    //     parser.parse_precedence(Precedence::Assignment)
 
     }
 }

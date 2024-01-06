@@ -1,5 +1,5 @@
 
-use crate::{token::{Token, TokenType, Number, Operator, Keyword}, chunk::Op};
+use crate::{token::{Token, TokenType, Number, Operator, Keyword}, chunk::Op, compiler::Compiler};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Precedence {
@@ -15,6 +15,25 @@ pub enum Precedence {
     Unary,
     Call,
     Primary
+}
+
+impl Precedence {
+    fn next(&self) -> Self {
+        match self {
+            Precedence::None => Precedence::Assignment,
+            Precedence::Assignment => Precedence::Or,
+            Precedence::Or => Precedence::And,
+            Precedence::And => Precedence::Equality,
+            Precedence::Equality => Precedence::Comparison,
+            Precedence::Comparison => Precedence::Term,
+            Precedence::Term => Precedence::Factor,
+            Precedence::Factor => Precedence::Exponent,
+            Precedence::Exponent => Precedence::Unary,
+            Precedence::Unary => Precedence::Call,
+            Precedence::Call => Precedence::Primary,
+            Precedence::Primary => panic!("no next precedence"),
+        }
+    }
 }
 
 impl From<TokenType> for ParseRule {
@@ -62,18 +81,14 @@ impl From<TokenType> for ParseRule {
 
 type ParseFn = fn(&mut Parser, bool) -> ();
 
+#[derive(Debug)]
 struct ParseRule {
     prefix: Option<ParseFn>,
     infix: Option<ParseFn>,
     precedence: Precedence
 }
 
-struct Local {
-    name: Token,
-    depth: u8,
-    captured: bool
-}
-
+#[derive(Debug)]
 enum FuncType {
     Function,
     Initializer,
@@ -81,16 +96,18 @@ enum FuncType {
     Script,
 }
 
-pub struct Parser {
+#[derive(Debug)]
+pub struct Parser<'vm> {
+    compiler: &'vm Compiler<'vm>,
     current_index: usize,
     tokens: Vec<Token>,
     had_error: bool,
     panic_mode: bool
 }
 
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Parser {
-        Parser { current_index: 0, tokens, had_error: false, panic_mode: false }
+impl<'vm> Parser<'vm> {
+    pub fn new(compiler: &'vm Compiler<'vm>, tokens: Vec<Token>) -> Parser<'vm> {
+        Parser { compiler, current_index: 0, tokens, had_error: false, panic_mode: false }
     }
 
     #[inline]
@@ -167,7 +184,7 @@ impl Parser {
         }
     }
 
-    fn declaration(&mut self) {
+    pub fn declaration(&mut self) {
         self.statement()
     }
 
@@ -179,35 +196,56 @@ impl Parser {
 }
 
 fn emit_byte(op: Op, line: usize) {
-    println!("emitting bytes");
-    op;
-    line;
+    todo!("")
 }
 
-fn unary(_parser: &mut Parser, _: bool) {
+fn unary(parser: &mut Parser, _: bool) {
+    todo!("")
+}
+
+fn binary(parser: &mut Parser, _: bool) {
+    let previous = parser.previous();
+    let tokentype = previous.tokentype;
+    let line = previous.line;
+    let parse_rule: ParseRule = tokentype.into();
+
+    parser.parse_precedence(parse_rule.precedence.next());
+
+    match tokentype {
+        TokenType::Operator(Operator::Plus) => emit_byte(Op::Add, line),
+        TokenType::Operator(Operator::Minus) => emit_byte(Op::Subtract, line),
+        TokenType::Operator(Operator::Star) => emit_byte(Op::Multiply, line),
+        TokenType::Operator(Operator::Slash) => emit_byte(Op::Divide, line),
+        TokenType::Operator(Operator::StarStar) => emit_byte(Op::Exponent, line),
+        TokenType::Operator(Operator::SlashSlash) => emit_byte(Op::IntDivide, line),
+        TokenType::Operator(Operator::Less) => emit_byte(Op::Less, line),
+        TokenType::Operator(Operator::LessEqual) => emit_byte(Op::LessEqual, line),
+        TokenType::Operator(Operator::Greater) => emit_byte(Op::Greater, line),
+        TokenType::Operator(Operator::GreaterEqual) => emit_byte(Op::Greater, line),
+        TokenType::Operator(Operator::EqualEqual) => emit_byte(Op::ValueEqual, line),
+        TokenType::Operator(Operator::NotEqual) => emit_byte(Op::NotValueEqual, line),
+        _ => panic!("unknown binary operator"),
+    }
+
 
 }
 
-fn binary(_parser: &mut Parser, _: bool) {
+fn grouping(parser: &mut Parser, _: bool) {
+    todo!("")
+}
+
+fn call(parser: &mut Parser, _: bool) {
+    todo!("")
+}
+
+fn integer(parser: &mut Parser, _: bool) {
 
 }
 
-fn grouping(_parser: &mut Parser, _: bool) {
-
-}
-
-fn call(_parser: &mut Parser, _: bool) {
-
-}
-
-fn integer(_parser: &mut Parser, _: bool) {
-
-}
-
-fn float(_parser: &mut Parser, _: bool) {
-
+fn float(parser: &mut Parser, _: bool) {
+    todo!("")
 }
 
 fn complex(_parser: &mut Parser, _: bool) {
-
+    todo!("")
 }

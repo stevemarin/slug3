@@ -38,13 +38,13 @@ impl<'a> Sub<Value<'a>> for Value<'a> {
     fn sub(self, rhs: Value) -> Self::Output {
         match (self, rhs) {
             (Value::Integer(a), Value::Integer(b)) => Value::Integer(a - b),
-            (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64 - b),
-            (Value::Integer(a), Value::Complex(b)) => Value::Complex(Complex::new(a as f64, 0.0) - b),
-            (Value::Float(a), Value::Integer(b)) => Value::Float(a - b as f64),
+            // (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64 - b),
+            // (Value::Integer(a), Value::Complex(b)) => Value::Complex(Complex::new(a as f64, 0.0) - b),
+            // (Value::Float(a), Value::Integer(b)) => Value::Float(a - b as f64),
             (Value::Float(a), Value::Float(b)) => Value::Float(a - b),
-            (Value::Float(a), Value::Complex(b)) => Value::Complex(Complex::new(a, 0.0) - b),
-            (Value::Complex(a), Value::Integer(b)) => Value::Complex(a - Complex::new(b as f64, 0.0)),
-            (Value::Complex(a), Value::Float(b)) => Value::Complex(a - Complex::new(b, 0.0)),
+            // (Value::Float(a), Value::Complex(b)) => Value::Complex(Complex::new(a, 0.0) - b),
+            // (Value::Complex(a), Value::Integer(b)) => Value::Complex(a - Complex::new(b as f64, 0.0)),
+            // (Value::Complex(a), Value::Float(b)) => Value::Complex(a - Complex::new(b, 0.0)),
             (Value::Complex(a), Value::Complex(b)) => Value::Complex(a - b),
             _ => unreachable!()
         }
@@ -74,13 +74,13 @@ impl<'a> Div<Value<'a>> for Value<'a> {
     fn div(self, rhs: Value) -> Self::Output {
         match (self, rhs) {
             (Value::Integer(a), Value::Integer(b)) => Value::Float((a / b) as f64),
-            (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64 / b),
-            (Value::Integer(a), Value::Complex(b)) => Value::Complex(Complex::new(a as f64, 0.0) / b),
-            (Value::Float(a), Value::Integer(b)) => Value::Float(a / b as f64),
+            // (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64 / b),
+            // (Value::Integer(a), Value::Complex(b)) => Value::Complex(Complex::new(a as f64, 0.0) / b),
+            // (Value::Float(a), Value::Integer(b)) => Value::Float(a / b as f64),
             (Value::Float(a), Value::Float(b)) => Value::Float(a / b),
-            (Value::Float(a), Value::Complex(b)) => Value::Complex(Complex::new(a, 0.0) / b),
-            (Value::Complex(a), Value::Integer(b)) => Value::Complex(a / Complex::new(b as f64, 0.0)),
-            (Value::Complex(a), Value::Float(b)) => Value::Complex(a / Complex::new(b, 0.0)),
+            // (Value::Float(a), Value::Complex(b)) => Value::Complex(Complex::new(a, 0.0) / b),
+            // (Value::Complex(a), Value::Integer(b)) => Value::Complex(a / Complex::new(b as f64, 0.0)),
+            // (Value::Complex(a), Value::Float(b)) => Value::Complex(a / Complex::new(b, 0.0)),
             (Value::Complex(a), Value::Complex(b)) => Value::Complex(a / b),
             _ => unreachable!()
         }
@@ -123,13 +123,13 @@ impl<'a> Value<'a> {
     pub fn pow(self, rhs: Value) -> Self {
         match (self, rhs) {
             (Value::Integer(a), Value::Integer(b)) => Value::Float((a as f64).powf(b as f64)),
-            (Value::Integer(a), Value::Float(b)) => Value::Float((a as f64).powf(b)),
-            (Value::Integer(a), Value::Complex(b)) => Value::Complex(Complex::new(a as f64, 0.0).powc(b)),
+            // (Value::Integer(a), Value::Float(b)) => Value::Float((a as f64).powf(b)),
+            // (Value::Integer(a), Value::Complex(b)) => Value::Complex(Complex::new(a as f64, 0.0).powc(b)),
             (Value::Float(a), Value::Integer(b)) => Value::Float(a.powf(b as f64)),
             (Value::Float(a), Value::Float(b)) => Value::Float(a.powf(b)),
-            (Value::Float(a), Value::Complex(b)) => Value::Complex(Complex::new(a, 0.0).powc(b)),
+            // (Value::Float(a), Value::Complex(b)) => Value::Complex(Complex::new(a, 0.0).powc(b)),
             (Value::Complex(a), Value::Integer(b)) => Value::Complex(a.powc(Complex::new(b as f64, 0.0))),
-            (Value::Complex(a), Value::Float(b)) => Value::Complex(a.powc(Complex::new(b, 0.0))),
+            // (Value::Complex(a), Value::Float(b)) => Value::Complex(a.powc(Complex::new(b, 0.0))),
             (Value::Complex(a), Value::Complex(b)) => Value::Complex(a.powc(b)),
             _ => unreachable!()
         }
